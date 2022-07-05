@@ -1,0 +1,7 @@
+
+uci set network.wan.proto='static'
+uci set network.wan.ipaddr='10.2.0.70'
+uci set network.wan.netmask='255.255.255.252'
+uci set network.wan.gateway='10.2.0.69'
+uci commit
+service network reload

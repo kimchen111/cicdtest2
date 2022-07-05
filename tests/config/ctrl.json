@@ -1,0 +1,6 @@
+{
+    "disablePost":"true",
+    "zmqListen":"tcp://*:5671",
+    "apiListen":":18080",
+    "stateNotifyUrl":"http://192.168.211.63:8100/hybridwan/api/statenotify"
+}

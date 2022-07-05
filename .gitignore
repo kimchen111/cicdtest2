@@ -1,0 +1,6 @@
+bin/
+docs/
+prev/
+temp/
+go.sum
+sdwan.tar.gz

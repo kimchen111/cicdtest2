@@ -1,0 +1,14 @@
+#!/bin/sh
+[ ! -d /sdwan ] && {
+    mkdir /sdwan
+}
+kill $(pidof cpeagent) 2>/dev/null
+sleep 1
+[ ! -f /etc/cpe.json ] && {
+wget http://192.168.236.236:18080/tests/config/cpe.json -O /etc/cpe.json
+}
+wget http://192.168.236.236:18080/bin/cpeagent -O /tmp/cpeagent
+chmod +x /tmp/cpeagent
+touch /tmp/ca.log
+/tmp/cpeagent 1>>/tmp/ca.log 2>&1 &
+tail -f /tmp/ca.log

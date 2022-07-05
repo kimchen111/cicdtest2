@@ -1,0 +1,7 @@
+#!/bin/bash
+if [ $# == 1 ]; then
+  name=$1
+  ip netns exec ${name} /usr/sbin/birdc -s /run/${name}.ctl
+else
+  echo "Usage: birdc ns50"
+fi

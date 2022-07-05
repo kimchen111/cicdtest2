@@ -1,0 +1,49 @@
+#!/bin/bash
+fname=$1
+[ -f ${fname} ] && {
+[ "${RR}" != "" ] && {
+sed -i "s/*RR/${RR}/g" ${fname}
+}
+[ "${RR1}" != "" ] && {
+sed -i "s/*RR1/${RR1}/g" ${fname}
+}
+[ "${RR2}" != "" ] && {
+sed -i "s/*RR2/${RR2}/g" ${fname}
+}
+[ "${VPE1}" != "" ] && {
+sed -i "s/*VPE1/${VPE1}/g" ${fname}
+}
+[ "${VPE2}" != "" ] && {
+sed -i "s/*VPE2/${VPE2}/g" ${fname}
+}
+[ "${VPE3}" != "" ] && {
+sed -i "s/*VPE3/${VPE3}/g" ${fname}
+}
+[ "${VPE4}" != "" ] && {
+sed -i "s/*VPE4/${VPE4}/g" ${fname}
+}
+[ "${CPE1}" != "" ] && {
+sed -i "s/*CPE1/${CPE1}/g" ${fname}
+}
+[ "${CPE2}" != "" ] && {
+sed -i "s/*CPE2/${CPE2}/g" ${fname}
+}
+[ "${HUB1A}" != "" ] && {
+sed -i "s/*HUB1A/${HUB1A}/g" ${fname}
+}
+[ "${HUB1B}" != "" ] && {
+sed -i "s/*HUB1B/${HUB1B}/g" ${fname}
+}
+[ "${CPE3A}" != "" ] && {
+sed -i "s/*CPE3A/${CPE3A}/g" ${fname}
+}
+[ "${CPE3B}" != "" ] && {
+sed -i "s/*CPE3B/${CPE3B}/g" ${fname}
+}
+[ "${CPE3}" != "" ] && {
+sed -i "s/*CPE3/${CPE3}/g" ${fname}
+}
+[ "${CPE4}" != "" ] && {
+sed -i "s/*CPE4/${CPE4}/g" ${fname}
+}
+}

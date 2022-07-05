@@ -1,0 +1,94 @@
+echo "RR" > /etc/hostname
+hostname RR
+
+cat>/etc/network/interfaces<<EOF
+auto lo
+iface lo inet loopback
+
+auto dummy0
+iface dummy0 inet static
+    pre-up ip li add type dummy
+    post-up ip li del dev dummy1
+    address 10.10.10.1
+    netmask 255.255.255.255
+    post-down ip li del dev dummy0
+
+auto eth0
+iface eth0 inet dhcp
+
+auto eth6
+iface eth6 inet static
+        address 10.2.0.1
+        netmask 255.255.255.252
+
+auto eth7
+iface eth7 inet static
+        address 10.2.0.5
+        netmask 255.255.255.252
+EOF
+
+service networking restart
+
+iptables -t nat -A POSTROUTING -s 10.2.0.0/24 -o eth0 -j MASQUERADE
+service iptables save
+rc-update add iptables
+
+
+cat>/etc/bird.conf<<EOF
+log syslog all;
+
+router id 10.10.10.1;
+
+protocol device {
+    scan time 10;
+}
+
+protocol kernel {
+    ipv4 { 
+        export all;
+    };
+    scan time 15;
+}
+
+protocol static {
+    ipv4 {
+        import all;
+        export all;
+    };
+    route 192.168.23.0/24 via 192.168.122.1;
+}
+
+protocol ospf {
+    ipv4 { 
+        import all;
+        export filter {
+            ospf_metric1 = 1000;
+            if source = RTS_STATIC then accept; else reject;
+        }; 
+    };
+
+    area 0 {
+        interface "eth0" {
+            cost 5;
+            type broadcast;
+            hello 5; retransmit 2; wait 10; dead 20;
+            authentication cryptographic; password "XXXX";
+        };
+
+        interface "eth6", "eth7" {
+            cost 5;
+            type pointopoint;
+            hello 5; retransmit 2; wait 10; dead 20;
+            authentication cryptographic; password "XXXX";
+        };
+
+        interface "*" {
+            cost 1000;
+            stub;
+        };
+    };
+}
+EOF
+
+rc-update add bird
+/etc/init.d/bird restart

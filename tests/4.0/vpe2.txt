@@ -1,0 +1,16 @@
+echo "VPE2" > /etc/hostname
+hostname VPE2
+
+cat>/etc/network/interfaces<<EOF
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+    address 192.168.122.112
+    netmask 255.255.255.0
+    gateway 192.168.122.1
+
+EOF
+
+service networking restart

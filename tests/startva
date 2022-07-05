@@ -1,0 +1,13 @@
+#!/bin/sh
+[ ! -d /sdwan ] && {
+  mkdir /sdwan
+}
+kill $(pidof vpeagent) 2>/dev/null
+sleep 1
+[ ! -f /etc/cpe.json ] && {
+wget http://192.168.236.236:18080/tests/config/vpe.json -O /etc/vpe.json
+}
+wget http://192.168.236.236:18080/bin/vpeagent -O /sdwan/vpeagent
+chmod +x /sdwan/vpeagent
+/sdwan/vpeagent 1>>/tmp/va.log 2>&1 &
+tail -f /tmp/va.log

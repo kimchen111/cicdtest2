@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [ $# != 2 ]; then
+  echo "Usage: bird [start|stop] ns50"
+  exit
+fi
+
+action=$1
+name=$2
+
+start() {
+  ip netns exec ${name} /usr/sbin/bird -c /sdwan/bgp/ns50.conf -s /run/${name}.ctl -P /var/run/bird/${name}.pid
+}
+
+stop() {
+  pid=$(cat /var/run/bird/${name}.pid)
+  kill ${pid}
+}
+
+[ "${action}" == "start" ] && {
+  start
+}
+
+[ "${action}" == "stop" ] && {
+  stop
+}
