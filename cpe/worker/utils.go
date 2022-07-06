@@ -505,6 +505,42 @@ func DelVnetZone(name string) {
 	}
 }
 
+func AddDevToBridge(brdevname string, devname string) {
+	values, _ := uci.Get("network", brdevname, "ports")
+	log.Printf("orig %s ports: %s", brdevname, values)
+	exists := false
+	for _, v := range values {
+		if v == devname {
+			exists = true
+			break
+		}
+	}
+	if !exists {
+		portlist := append(values, devname)
+		log.Printf("new %s ports: %s", brdevname, portlist)
+		uci.Set("network", brdevname, "ports", portlist...)
+	}
+}
+
+func DelDevFromBridge(brdevname string, devname string) {
+	portlist := make([]string, 10)
+	values, _ := uci.Get("network", brdevname, "ports")
+	log.Printf("orig %s ports: %s", brdevname, values)
+	idx := 0
+	for _, v := range values {
+		if v != devname {
+			portlist[idx] = v
+			idx++
+		}
+	}
+	log.Printf("new %s ports: %s", brdevname, portlist)
+	if idx > 0 {
+		uci.Set("network", brdevname, "ports", portlist[:idx]...)
+	} else {
+		uci.Del("network", brdevname, "ports")
+	}
+}
+
 func AttachVxlanToBridge(vlname string, brname string) {
 	values, _ := uci.Get("network", brname, "ports")
 	log.Printf("current network.%s.ports: %s", brname, values)

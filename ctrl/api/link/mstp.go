@@ -9,14 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func initDirlinkRole(dl *common.DirlinkVO) {
+func initMstpRole(dl *common.MstpVO) {
 	server := device.GetGDM().GetDevice(dl.Server.Esn)
 	dl.Server.Role = server.SysInfo.AgentType
 	client := device.GetGDM().GetDevice(dl.Client.Esn)
 	dl.Client.Role = client.SysInfo.AgentType
 }
 
-// @Summary 在两个节点之间建立直连（专线）链路
+// @Summary 在两个节点之间建立专线链路（CPE/HUB-VPE，CPE-HUB）
 // @Description 示例：
 // @Description CPE-VPE/HUB
 // @Description {
@@ -39,13 +39,13 @@ func initDirlinkRole(dl *common.DirlinkVO) {
 // @Tags Link
 // @Accept  json
 // @Produce  json
-// @Param data body common.DirlinkVO true "专线信息"
+// @Param data body common.MstpVO true "专线信息"
 // @Success 200  {string} string  "结果描述"
-// @Router /v2/link/createdirlink [post]
-func CreateDirlink(c *gin.Context) {
-	dl := common.DirlinkVO{}
+// @Router /v2/link/createcpemstp [post]
+func CreateCpeMstp(c *gin.Context) {
+	dl := common.MstpVO{}
 	c.BindJSON(&dl)
-	initDirlinkRole(&dl)
+	initMstpRole(&dl)
 
 	if dl.Server.Role == "CPE" {
 		c.JSON(http.StatusOK, common.ApiResult{Status: "error", Body: "failed: Role error"})
@@ -55,7 +55,7 @@ func CreateDirlink(c *gin.Context) {
 	server := common.NewRequestTaskWithBody(
 		dl.Server.Esn,
 		common.CommonTaskClass.Link,
-		common.CommonLinkTaskType.AddDirEndpoint,
+		common.CommonLinkTaskType.AddMstpEndpoint,
 		dl,
 	)
 	r_server := agent.Request(server)
@@ -63,7 +63,7 @@ func CreateDirlink(c *gin.Context) {
 	client := common.NewRequestTaskWithBody(
 		dl.Client.Esn,
 		common.CommonTaskClass.Link,
-		common.CommonLinkTaskType.AddDirEndpoint,
+		common.CommonLinkTaskType.AddMstpEndpoint,
 		dl,
 	)
 	r_client := agent.Request(client)
@@ -72,7 +72,7 @@ func CreateDirlink(c *gin.Context) {
 	// c.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
-// @Summary 删除指定的dirlink
+// @Summary 删除指定的专线链路
 // @Description 示例：
 // @Description {
 // @Description "id": 102,
@@ -87,16 +87,16 @@ func CreateDirlink(c *gin.Context) {
 // @Tags Link
 // @Accept  json
 // @Produce  json
-// @Param data body common.VpnlinkVO true "Tunnel信息"
+// @Param data body common.MstpVO true "专线信息"
 // @Success 200  {string} string  "结果描述"
-// @Router /v2/link/removedirlink [post]
-func RemoveDirlink(c *gin.Context) {
-	dl := common.DirlinkVO{}
+// @Router /v2/link/removecpemstp [post]
+func RemoveCpeMstp(c *gin.Context) {
+	dl := common.MstpVO{}
 	c.BindJSON(&dl)
 	server := common.NewRequestTaskWithBody(
 		dl.Server.Esn,
 		common.CommonTaskClass.Link,
-		common.CommonLinkTaskType.DelDirEndpoint,
+		common.CommonLinkTaskType.DelMstpEndpoint,
 		dl,
 	)
 	vpe_r := agent.Request(server)
@@ -104,7 +104,7 @@ func RemoveDirlink(c *gin.Context) {
 	client := common.NewRequestTaskWithBody(
 		dl.Client.Esn,
 		common.CommonTaskClass.Link,
-		common.CommonLinkTaskType.DelDirEndpoint,
+		common.CommonLinkTaskType.DelMstpEndpoint,
 		dl,
 	)
 	cpe_r := agent.Request(client)

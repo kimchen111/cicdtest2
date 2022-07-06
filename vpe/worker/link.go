@@ -88,8 +88,8 @@ func (link Link) DelVpnEndpoint(msg common.Message) {
 	Response(msg.ToResult("failed: payload error"))
 } //删除VPE的VPN客户端配置
 
-func (link Link) AddDirEndpoint(msg common.Message) {
-	dl := common.DirlinkVO{}
+func (link Link) AddMstpEndpoint(msg common.Message) {
+	dl := common.MstpVO{}
 	if err := common.LoadBody(msg.Body, &dl); err == nil {
 		ns := dl.NetnsName()
 		if exists := common.NetnsExists(ns); !exists {
@@ -112,7 +112,7 @@ func (link Link) AddDirEndpoint(msg common.Message) {
 } //创建VPE的直连链路端点的网卡相关配置
 
 func (link Link) DelDirEndpoint(msg common.Message) {
-	dl := common.DirlinkVO{}
+	dl := common.MstpVO{}
 	if err := common.LoadBody(msg.Body, &dl); err == nil {
 		if ok := RemoveNetnsLink(dl.NetnsName(), dl.VlanifName()); !ok {
 			log.Println("Delete Direct link interface failed.")

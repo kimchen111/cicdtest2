@@ -69,13 +69,13 @@ var CpeRouteTaskType cpeRouteTaskType
 
 //Link
 type cpeLinkTaskType struct {
-	ResetLinkState    string //切换链路
-	AddTunnelEndpoint string //新建HUB之间的TUNNEL隧道
-	DelTunnelEndpoint string //删除HUB之间的TUNNEL隧道
-	AddHubDirlink     string //新建HUB之间的专线链路
-	DelHubDirlink     string //删除HUB之间的专线链路
-	SetupHub          string //新建一个HUB端点
-	DestroyHub        string //删除一个HUB端点
+	ResetLinkState     string //切换链路
+	AddTunnelEndpoint  string //新建HUB之间的TUNNEL隧道
+	DelTunnelEndpoint  string //删除HUB之间的TUNNEL隧道
+	AddHubMstpEndpoint string //新建HUB之间的专线链路
+	DelHubMstpEndpoint string //删除HUB之间的专线链路
+	SetupHub           string //新建一个HUB端点
+	DestroyHub         string //删除一个HUB端点
 }
 
 var CpeLinkTaskType cpeLinkTaskType

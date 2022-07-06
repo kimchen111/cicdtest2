@@ -517,7 +517,7 @@ func wgGetAllowedIps(name string, pubkey string) []string {
 }
 */
 
-func SetupDirlinkIntf(dl common.DirlinkVO) (string, bool) {
+func SetupDirlinkIntf(dl common.MstpVO) (string, bool) {
 	dle := dl.Server
 	if ok := common.CreateVlanIntf(dle.IntfName, dle.VlanId, dl.VlanifName()); !ok {
 		log.Printf("Create vlan intface %s failed.", dl.VlanifName())
@@ -547,7 +547,7 @@ func SetupDirlinkIntf(dl common.DirlinkVO) (string, bool) {
 }
 
 func LoadDirlinkIntf(name string) (string, bool) {
-	dl := common.DirlinkVO{}
+	dl := common.MstpVO{}
 	path := dl.Path()
 	common.LoadConfig(path, &dl)
 	return SetupDirlinkIntf(dl)

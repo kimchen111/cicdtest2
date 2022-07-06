@@ -147,6 +147,45 @@ echo
 echo "========================="
 
 ## 创建LAN
+
+echo "HUB1A 创建LAN"
+curl -X 'POST' \
+  'http://192.168.236.236:18080/v2/cpe/net/addlan/*HUB1A' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+"devices": [
+"eth2",
+"eth3"
+],
+"ipaddr": "192.168.100.1",
+"name": "lan",
+"netmask": "255.255.255.0",
+"protocol": "static"
+}'
+echo
+echo "========================="
+
+
+echo "HUB1B 创建LAN"
+curl -X 'POST' \
+  'http://192.168.236.236:18080/v2/cpe/net/addlan/*HUB1B' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+"devices": [
+"eth2",
+"eth3"
+],
+"ipaddr": "192.168.100.2",
+"name": "lan",
+"netmask": "255.255.255.0",
+"protocol": "static"
+}'
+echo
+echo "========================="
+
+
 echo "CPE-2 创建LAN"
 curl -X 'POST' \
   'http://192.168.236.236:18080/v2/cpe/net/addlan/*CPE2' \

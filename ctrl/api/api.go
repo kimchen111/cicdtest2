@@ -39,18 +39,17 @@ func RouteAgent(r *gin.Engine) {
 func RouteLink(r *gin.Engine) {
 	linkg := r.Group("/v2/link")
 	{
-		// linkg.POST("/vpe/createvpnendpoint/:esn", link.CreateVpnEndpoint)
-		linkg.POST("/createtunnel", link.CreateTunnel)
-		linkg.POST("/removetunnel", link.RemoveTunnel)
-		linkg.POST("/createvpnlink", link.CreateVpnlink)
-		linkg.POST("/removevpnlink", link.RemoveVpnlink)
-		linkg.POST("/createdirlink", link.CreateDirlink)
-		linkg.POST("/removedirlink", link.RemoveDirlink)
-		linkg.POST("/createhubdirlink", link.CreateHubDirlink)
-		linkg.POST("/removehubdirlink", link.RemoveHubDirlink)
+		linkg.POST("/createcpevpn", link.CreateCpeVpn)
+		linkg.POST("/removecpevpn", link.RemoveCpeVpn)
+		linkg.POST("/createcpemstp", link.CreateCpeMstp)
+		linkg.POST("/removecpemstp", link.RemoveCpeMstp)
+
+		linkg.POST("/createhubtunnel", link.CreateHubTunnel)
+		linkg.POST("/removehubtunnel", link.RemoveHubTunnel)
+		linkg.POST("/createhubmstp", link.CreateHubMstp)
+		linkg.POST("/removehubmstp", link.RemoveHubMstp)
+
 		linkg.POST("/resetlinkstate/:esn", link.ResetLinkState)
-		// linkg.POST("/vpe/removevpnendpoint/:esn", link.RemoveVpnEndpoint)
-		// linkg.POST("/vpe/removevpnclient/:esn", link.RemoveVpnClient)
 	}
 	r.POST("/v2/hub/setup/:esn", link.SetupHub)
 	r.POST("/v2/hub/destroy/:esn", link.DestroyHub)

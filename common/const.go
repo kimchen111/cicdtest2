@@ -52,10 +52,10 @@ var CommonTaskClass commonTaskClass
 
 //VPN，TUNNEL
 type commonLinkTaskType struct {
-	AddVpnEndpoint string //创建VPN端点
-	DelVpnEndpoint string //删除VPN端点
-	AddDirEndpoint string //创建直连链路端点
-	DelDirEndpoint string //删除直连链路端点
+	AddVpnEndpoint  string //创建VPN端点
+	DelVpnEndpoint  string //删除VPN端点
+	AddMstpEndpoint string //创建直连链路端点
+	DelMstpEndpoint string //删除直连链路端点
 }
 
 var CommonLinkTaskType commonLinkTaskType

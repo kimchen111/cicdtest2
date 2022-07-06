@@ -21,10 +21,33 @@ func (link Link) Name() string {
 func (link Link) SetupHub(msg common.Message) {
 	hubvo := common.HubVO{}
 	if err := common.LoadBody(msg.Body, &hubvo); err == nil {
-		if ok := hubvo.InitBridge(); !ok {
-			Response(msg.ToResult("failed: init bridge"))
-			return
+		//bridge
+		brdevname := hubvo.BridgeDevName()
+		briname := hubvo.BridgeName()
+		if _, ok := uci.Get("network", brdevname, "type"); !ok {
+			uci.AddSection("network", brdevname, "device")
+			uci.Set("network", brdevname, "type", "bridge")
+			uci.Set("network", brdevname, "name", briname)
+			uci.Set("network", brdevname, "bridge_empty", "1")
+			uci.Set("network", brdevname, "ipv6", "0")
+
+			uci.AddSection("network", briname, "interface")
+			uci.Set("network", briname, "device", briname)
+			uci.Set("network", briname, "proto", "static")
+			ipaddr, netmask := common.Cidr2AddrMask(hubvo.VtepAddr)
+			uci.Set("network", briname, "ipaddr", ipaddr)
+			uci.Set("network", briname, "netmask", netmask)
 		}
+		AddVnetZone(briname)
+		uci.Commit()
+		ReloadFirewall()
+		if ok := InterfaceUp(briname); !ok {
+			log.Printf("Interface setup %s failed.", briname)
+		}
+		// if ok := hubvo.InitBridge(); !ok {
+		// 	Response(msg.ToResult("failed: init bridge"))
+		// 	return
+		// }
 		content := hubvo.GenBgpContent()
 		if hubvo.Role == "RR" {
 			content += hubvo.GenRrServerBgpContent()
@@ -34,7 +57,7 @@ func (link Link) SetupHub(msg common.Message) {
 		common.WriteFile(common.CpeBirdConfPath, content)
 		common.WriteFile(common.CpeBirdStaticPath, "") //预先写一个空的静态文件
 		exec.Command("/etc/init.d/bird", "restart").Run()
-		hubvo.GenHubConf()
+		hubvo.GenHubConf() //写配置文件标记角色为HUB
 		Response(msg.ToResult("success"))
 		return
 	}
@@ -44,10 +67,24 @@ func (link Link) SetupHub(msg common.Message) {
 func (link Link) DestroyHub(msg common.Message) {
 	hubvo := common.HubVO{}
 	if err := common.LoadBody(msg.Body, &hubvo); err == nil {
-		if ok := hubvo.Removeridge(); !ok {
-			Response(msg.ToResult("failed: delete bridge"))
-			return
+		brdevname := hubvo.BridgeDevName()
+		briname := hubvo.BridgeName()
+		if _, ok := uci.Get("network", briname, "proto"); ok {
+			uci.DelSection("network", briname)
 		}
+		if _, ok := uci.Get("network", brdevname, "type"); ok {
+			uci.DelSection("network", brdevname)
+		}
+		DelVnetZone(briname)
+		uci.Commit()
+		if ok := InterfaceDown(briname); !ok {
+			log.Println("set interface down failed .")
+		}
+		ReloadFirewall()
+		// if ok := hubvo.Removeridge(); !ok {
+		// 	Response(msg.ToResult("failed: delete bridge"))
+		// 	return
+		// }
 		exec.Command("/etc/init.d/bird", "stop")
 		os.Remove(common.CpeBirdConfPath)
 		os.Remove(common.CpeBirdStaticPath)
@@ -58,6 +95,109 @@ func (link Link) DestroyHub(msg common.Message) {
 	Response(msg.ToResult("failed: payload error"))
 }
 
+func (link Link) AddTunnelEndpoint(msg common.Message) {
+	vtvo := common.VxlanTunnelVO{}
+	if err := common.LoadBody(msg.Body, &vtvo); err == nil {
+		name := vtvo.VxlanName()
+		if _, ok := uci.Get("network", name, "proto"); !ok {
+			log.Printf("Add %s type interface", name)
+			//vxlan dev
+			uci.AddSection("network", name, "device")
+			uci.Set("network", name, "proto", "vxlan")
+			uci.Set("network", name, "ipaddr", vtvo.SelfIpaddr)
+			uci.Set("network", name, "peeraddr", vtvo.RemoteIpaddr)
+			uci.Set("network", name, "port", strconv.Itoa(vtvo.Port()))
+			uci.Set("network", name, "vid", strconv.Itoa(vtvo.Vni))
+			brdevname := vtvo.BridgeDevName()
+			AddDevToBridge(brdevname, name)
+
+			// ruleName := fmt.Sprintf("vl%d", vtvo.Id)
+			AllowIncoming(name, vtvo.RemoteIpaddr, vtvo.SelfIpaddr, vtvo.Port())
+			uci.Commit()
+			InterfaceUp(name)
+			ReloadFirewall()
+			Response(msg.ToResult("success"))
+			return
+		} else {
+			Response(msg.ToResult("success: exits"))
+			return
+		}
+	}
+	Response(msg.ToResult("failed: payload error"))
+} //创建HUB的TUNNEL端点
+
+func (link Link) DelTunnelEndpoint(msg common.Message) {
+	vtvo := common.VxlanTunnelVO{}
+	if err := common.LoadBody(msg.Body, &vtvo); err == nil {
+		name := vtvo.VxlanName()
+		if _, ok := uci.Get("network", name, "proto"); ok {
+			uci.DelSection("network", name)
+			RemoveIncoming(vtvo.Id)
+			uci.Commit()
+			ReloadFirewall()
+			brdevname := vtvo.BridgeDevName()
+			DelDevFromBridge(brdevname, name)
+			InterfaceDown(name)
+			Response(msg.ToResult("success"))
+			return
+		} else {
+			Response(msg.ToResult("success: removed"))
+			return
+		}
+	}
+	Response(msg.ToResult("failed: payload error"))
+} //删除HUB的TUNNEL端点
+
+func (link Link) AddHubDirlink(msg common.Message) {
+	dl := common.MstpVO{}
+	if err := common.LoadBody(msg.Body, &dl); err == nil {
+		dle := dl.GetEndpoint()
+		devname := dle.DevName()
+		if _, ok := uci.Get("network", devname, "type"); !ok {
+			if dle.WithVlanIntf() {
+				uci.AddSection("network", devname, "device")
+				uci.Set("network", devname, "type", "8021q")
+				uci.Set("network", devname, "ifname", dle.IntfName)
+				uci.Set("network", devname, "vid", strconv.Itoa(dle.VlanId))
+				uci.Set("network", devname, "name", devname)
+				uci.Set("network", devname, "ipv6", "0")
+			}
+			brdevname := dl.BridgeDevName()
+			AddDevToBridge(brdevname, devname)
+			uci.Commit()
+			InterfaceUp(devname)
+			Response(msg.ToResult("success"))
+			return
+		} else {
+			Response(msg.ToResult("success: exits"))
+			return
+		}
+	}
+	Response(msg.ToResult("failed: payload error"))
+} //创建HUB的TUNNEL端点
+
+func (link Link) DelHubDirlink(msg common.Message) {
+	dl := common.MstpVO{}
+	if err := common.LoadBody(msg.Body, &dl); err == nil {
+		dle := dl.GetEndpoint()
+		devname := dle.DevName()
+		if _, ok := uci.Get("network", devname, "type"); ok {
+			uci.DelSection("network", devname)
+			uci.Commit()
+			brdevname := dl.BridgeDevName()
+			DelDevFromBridge(brdevname, devname)
+			InterfaceDown(devname)
+			Response(msg.ToResult("success"))
+			return
+		} else {
+			Response(msg.ToResult("success: removed"))
+			return
+		}
+	}
+	Response(msg.ToResult("failed: payload error"))
+} //删除HUB的TUNNEL端点
+
+/*
 func (link Link) AddTunnelEndpoint(msg common.Message) {
 	vtvo := common.VxlanTunnelVO{}
 	if err := common.LoadBody(msg.Body, &vtvo); err == nil {
@@ -102,6 +242,7 @@ func (link Link) DelTunnelEndpoint(msg common.Message) {
 	}
 	Response(msg.ToResult("failed: payload error"))
 } //删除HUB的TUNNEL端点
+*/
 
 /*
 network.wg0=interface
@@ -241,8 +382,8 @@ config interface 'eth5_2002'
         option ipaddr '10.0.3.2'
         option netmask '255.255.255.252'
 */
-func (link Link) AddDirEndpoint(msg common.Message) {
-	dl := common.DirlinkVO{}
+func (link Link) AddMstpEndpoint(msg common.Message) {
+	dl := common.MstpVO{}
 	if err := common.LoadBody(msg.Body, &dl); err == nil {
 		dle := dl.GetEndpoint()
 		name := dle.InterfaceName()
@@ -271,6 +412,9 @@ func (link Link) AddDirEndpoint(msg common.Message) {
 		}
 		AddVnetZone(name)
 		uci.Commit()
+		if ok := InterfaceUp(name); !ok {
+			log.Printf("Interface setup %s failed.", name)
+		}
 		ReloadFirewall()
 		Response(msg.ToResult("success"))
 		return
@@ -279,8 +423,9 @@ func (link Link) AddDirEndpoint(msg common.Message) {
 } //新建直连专线链路的网卡
 
 func (link Link) DelDirEndpoint(msg common.Message) {
-	dle := common.DirlinkEndpointVO{}
-	if err := common.LoadBody(msg.Body, &dle); err == nil {
+	mstp := common.MstpVO{}
+	if err := common.LoadBody(msg.Body, &mstp); err == nil {
+		dle := mstp.GetEndpoint()
 		name := dle.InterfaceName()
 		if _, ok := uci.Get("network", name, "proto"); ok {
 			uci.DelSection("network", name)
@@ -343,45 +488,45 @@ firewall.@rule[9].dest_ip='192.168.122.96'
 */
 /*
 func (link Link) AddTunnelEndpoint(msg common.Message) {
-	tunnel := common.VxlanTunnelVO{}
-	if err := common.LoadBody(msg.Body, &tunnel); err == nil {
-		name := tunnel.VxlanName()
+	vtvo := common.VxlanTunnelVO{}
+	if err := common.LoadBody(msg.Body, &vtvo); err == nil {
+		name := vtvo.VxlanName()
 		if _, ok := uci.Get("network", name, "proto"); !ok {
 			log.Printf("Add %s type interface", name)
 			//vxlan dev
-			uci.AddSection("network", name, "interface")
+			uci.AddSection("network", name, "device")
 			uci.Set("network", name, "proto", "vxlan")
-			uci.Set("network", name, "ipaddr", tunnel.SelfIpaddr)
-			uci.Set("network", name, "peeraddr", tunnel.RemoteIpaddr)
-			uci.Set("network", name, "port", strconv.Itoa(tunnel.Port()))
-			uci.Set("network", name, "vid", strconv.Itoa(tunnel.Vni))
+			uci.Set("network", name, "ipaddr", vtvo.SelfIpaddr)
+			uci.Set("network", name, "peeraddr", vtvo.RemoteIpaddr)
+			uci.Set("network", name, "port", strconv.Itoa(vtvo.Port()))
+			uci.Set("network", name, "vid", strconv.Itoa(vtvo.Vni))
 
-			//防火墙
-			ruleName := fmt.Sprintf("vl%d", tunnel.Id)
-			uci.AddSection("firewall", ruleName, "rule")
-			uci.Set("firewall", ruleName, "name", ruleName)
-			uci.Set("firewall", ruleName, "proto", "udp")
-			uci.Set("firewall", ruleName, "src", "wan")
-			uci.Set("firewall", ruleName, "src_ip", tunnel.RemoteIpaddr)
-			uci.Set("firewall", ruleName, "target", "ACCEPT")
-			uci.Set("firewall", ruleName, "dest_ip", tunnel.SelfIpaddr)
-			uci.Set("firewall", ruleName, "dest_port", strconv.Itoa(tunnel.Port()))
+			// //防火墙
+			// ruleName := fmt.Sprintf("vl%d", tunnel.Id)
+			// uci.AddSection("firewall", ruleName, "rule")
+			// uci.Set("firewall", ruleName, "name", ruleName)
+			// uci.Set("firewall", ruleName, "proto", "udp")
+			// uci.Set("firewall", ruleName, "src", "wan")
+			// uci.Set("firewall", ruleName, "src_ip", tunnel.RemoteIpaddr)
+			// uci.Set("firewall", ruleName, "target", "ACCEPT")
+			// uci.Set("firewall", ruleName, "dest_ip", tunnel.SelfIpaddr)
+			// uci.Set("firewall", ruleName, "dest_port", strconv.Itoa(tunnel.Port()))
 
-			//bridge
-			brname := tunnel.BridgeName()
-			if _, ok := uci.Get("network", brname, "type"); !ok {
-				uci.AddSection("network", brname, "device")
-				uci.Set("network", brname, "type", "bridge")
-				uci.Set("network", brname, "name", brname)
+			// //bridge
+			// brname := tunnel.BridgeName()
+			// if _, ok := uci.Get("network", brname, "type"); !ok {
+			// 	uci.AddSection("network", brname, "device")
+			// 	uci.Set("network", brname, "type", "bridge")
+			// 	uci.Set("network", brname, "name", brname)
 
-				briname := tunnel.BridgeIntfName()
-				uci.AddSection("network", briname, "interface")
-				uci.Set("network", briname, "device", brname)
-				uci.Set("network", briname, "proto", "static")
-				ipaddr, netmask := tunnel.SplitIpaddr()
-				uci.Set("network", briname, "ipaddr", ipaddr)
-				uci.Set("network", briname, "netmask", netmask)
-			}
+			// 	briname := tunnel.BridgeIntfName()
+			// 	uci.AddSection("network", briname, "interface")
+			// 	uci.Set("network", briname, "device", brname)
+			// 	uci.Set("network", briname, "proto", "static")
+			// 	ipaddr, netmask := tunnel.SplitIpaddr()
+			// 	uci.Set("network", briname, "ipaddr", ipaddr)
+			// 	uci.Set("network", briname, "netmask", netmask)
+			// }
 
 			AttachVxlanToBridge(name, brname)
 

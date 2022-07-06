@@ -28,6 +28,10 @@ func (vto *VxlanTunnelVO) VxlanName() string {
 	return fmt.Sprintf("vl%d", vto.Id)
 }
 
+func (vto *VxlanTunnelVO) BridgeDevName() string {
+	return fmt.Sprintf("devhub%d", vto.Vni)
+}
+
 func (vto *VxlanTunnelVO) HubBridgeName() string {
 	return fmt.Sprintf("hub%d", vto.Vni)
 }
@@ -138,6 +142,10 @@ func (hub *HubVO) RemoveHubConf() {
 	if FileExists(CpeHubConfPath) {
 		os.Remove(CpeHubConfPath)
 	}
+}
+
+func (hub *HubVO) BridgeDevName() string {
+	return fmt.Sprintf("devhub%d", hub.Vni)
 }
 
 func (hub *HubVO) BridgeName() string {
@@ -785,7 +793,7 @@ PersistentKeepalive = 30
 // 	return wgEndpoint
 // }
 
-type DirlinkEndpointVO struct {
+type MstpEndpointVO struct {
 	Esn      string `json:"esn"`                //ESN
 	Role     string `json:"role,omitempty"`     //角色，不用填写，自动计算
 	IntfName string `json:"intfName,omitempty"` //专线接入到哪个网卡
@@ -793,12 +801,12 @@ type DirlinkEndpointVO struct {
 	IntfAddr string `json:"intfAddr,omitempty"` //专线网卡的IP地址
 }
 
-func (dle *DirlinkEndpointVO) WithVlanIntf() bool {
+func (dle *MstpEndpointVO) WithVlanIntf() bool {
 	return dle.VlanId > 1
 }
 
 //For CPE/HUB
-func (dle *DirlinkEndpointVO) InterfaceName() string {
+func (dle *MstpEndpointVO) InterfaceName() string {
 	if dle.WithVlanIntf() {
 		return fmt.Sprintf("%s_%d", dle.IntfName, dle.VlanId)
 	} else {
@@ -807,59 +815,62 @@ func (dle *DirlinkEndpointVO) InterfaceName() string {
 }
 
 //For CPE/HUB uci config
-func (dle *DirlinkEndpointVO) DevName() string {
+func (dle *MstpEndpointVO) DevName() string {
 	return fmt.Sprintf("dev%s_%d", dle.IntfName, dle.VlanId)
 }
-func (dle *DirlinkEndpointVO) IntfPureAddr() string {
+func (dle *MstpEndpointVO) IntfPureAddr() string {
 	return PureIp(dle.IntfAddr)
 }
 
-type DirlinkVO struct {
-	Id       int               `json:"id"`            //ID
-	Vni      int               `json:"vni,omitempty"` //VNI，用于标识网卡名称
-	State    string            `json:"state"`         //是否主链路 PRIMARY SECONDARY
-	Server   DirlinkEndpointVO `json:"server"`        //服务端信息（VPE、HUB）
-	Client   DirlinkEndpointVO `json:"client"`        //客户端信息（CPE-VPE、CPE-HUB，HUB-VPE）
-	devState string            //设备的状态，MASTER/BACKUP
+type MstpVO struct {
+	Id       int            `json:"id"`            //ID
+	Vni      int            `json:"vni,omitempty"` //VNI，用于标识网卡名称
+	State    string         `json:"state"`         //是否主链路 PRIMARY SECONDARY
+	Server   MstpEndpointVO `json:"server"`        //服务端信息（VPE、HUB）
+	Client   MstpEndpointVO `json:"client"`        //客户端信息（CPE-VPE、CPE-HUB，HUB-VPE）
+	devState string         //设备的状态，MASTER/BACKUP
 }
 
-func (dl *DirlinkVO) GetEndpoint() DirlinkEndpointVO {
+func (dl *MstpVO) GetEndpoint() MstpEndpointVO {
 	if dl.IsServer() {
 		return dl.Server
 	} else {
 		return dl.Client
 	}
 }
-func (dl *DirlinkVO) BirdNeighFileName() string {
+func (dl *MstpVO) BirdNeighFileName() string {
 	return fmt.Sprintf("/etc/bird-dir%d.conf", dl.Id)
+}
+func (dl *MstpVO) BridgeDevName() string {
+	return fmt.Sprintf("devhub%d", dl.Vni)
 }
 
 //For VPE
-func (dl *DirlinkVO) VlanifName() string {
+func (dl *MstpVO) VlanifName() string {
 	return fmt.Sprintf("dir%d_%d", dl.Vni, dl.Server.VlanId)
 }
-func (dl *DirlinkVO) Path() string {
+func (dl *MstpVO) Path() string {
 	return fmt.Sprintf("%s/%s", VpeDirlinkConfDir, dl.VlanifName())
 }
-func (dl *DirlinkVO) NetnsName() string {
+func (dl *MstpVO) NetnsName() string {
 	return fmt.Sprintf("ns%d", dl.Vni)
 }
-func (dl *DirlinkVO) IsServer() bool {
+func (dl *MstpVO) IsServer() bool {
 	return GBC.GetESN() == dl.Server.Esn
 }
 
-func (dl *DirlinkVO) SetDevState(state string) {
+func (dl *MstpVO) SetDevState(state string) {
 	dl.devState = state
 }
-func (dl *DirlinkVO) DevState() string {
+func (dl *MstpVO) DevState() string {
 	return dl.devState
 }
 
-func (dl *DirlinkVO) CommonLinkVO() LinkVO {
+func (dl *MstpVO) CommonLinkVO() LinkVO {
 	return LinkVO{Vni: dl.Vni}
 }
 
-func (dl *DirlinkVO) PeerRole() string {
+func (dl *MstpVO) PeerRole() string {
 	if GBC.GetESN() == dl.Server.Esn {
 		return dl.Client.Role
 	} else {
@@ -867,7 +878,7 @@ func (dl *DirlinkVO) PeerRole() string {
 	}
 }
 
-func (dl *DirlinkVO) SelfIntfPureAddr() string {
+func (dl *MstpVO) SelfIntfPureAddr() string {
 	if GBC.GetESN() == dl.Server.Esn {
 		return dl.Server.IntfPureAddr()
 	} else {
@@ -875,7 +886,7 @@ func (dl *DirlinkVO) SelfIntfPureAddr() string {
 	}
 }
 
-func (dl *DirlinkVO) PeerIntfPureAddr() string {
+func (dl *MstpVO) PeerIntfPureAddr() string {
 	if GBC.GetESN() == dl.Server.Esn {
 		return dl.Client.IntfPureAddr()
 	} else {
@@ -883,19 +894,19 @@ func (dl *DirlinkVO) PeerIntfPureAddr() string {
 	}
 }
 
-func (dl *DirlinkVO) NeighASN() string {
+func (dl *MstpVO) NeighASN() string {
 	return fmt.Sprintf("%s_ASN", dl.PeerRole())
 }
 
-func (dl *DirlinkVO) ImportFilter() string {
+func (dl *MstpVO) ImportFilter() string {
 	return fmt.Sprintf("%s_%s_i", strings.ToLower(dl.devState), strings.ToLower(dl.State))
 }
-func (dl *DirlinkVO) ExportFilter() string {
+func (dl *MstpVO) ExportFilter() string {
 	return fmt.Sprintf("%s_%s_o", strings.ToLower(dl.devState), strings.ToLower(dl.State))
 }
 
 //PEER内容
-func (dl *DirlinkVO) GenBirdNeighContent() string {
+func (dl *MstpVO) GenBirdNeighContent() string {
 	temp := `
 protocol bgp %s from %s {
 	source address %s;
@@ -920,12 +931,12 @@ protocol bgp %s from %s {
 	return result
 }
 
-type HubDirlinkVO struct {
-	Id       int               `json:"id"`            //ID
-	Vni      int               `json:"vni,omitempty"` //VNI，用于标识网卡名称
-	PeerA    DirlinkEndpointVO `json:"peerA"`         //服务端信息（VPE、HUB）
-	PeerB    DirlinkEndpointVO `json:"peerB"`         //客户端信息（CPE-VPE、CPE-HUB，HUB-VPE）
-	devState string            //设备的状态，MASTER/BACKUP
+type HubMstpVO struct {
+	Id       int            `json:"id"`            //ID
+	Vni      int            `json:"vni,omitempty"` //VNI，用于标识网卡名称
+	PeerA    MstpEndpointVO `json:"peerA"`         //服务端信息（VPE、HUB）
+	PeerB    MstpEndpointVO `json:"peerB"`         //客户端信息（CPE-VPE、CPE-HUB，HUB-VPE）
+	devState string         //设备的状态，MASTER/BACKUP
 }
 
 type VpnlinkStateVO struct {

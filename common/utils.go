@@ -119,9 +119,9 @@ fi
 	}
 }
 
-func LoadDirlinkIntf(name string) (DirlinkEndpointVO, error) {
+func LoadDirlinkIntf(name string) (MstpEndpointVO, error) {
 	path := fmt.Sprintf("%s/%s", VpeDirlinkConfDir, name)
-	dle := DirlinkEndpointVO{}
+	dle := MstpEndpointVO{}
 	err := LoadConfig(path, &dle)
 	return dle, err
 }

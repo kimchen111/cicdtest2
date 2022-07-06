@@ -16,7 +16,7 @@ func initVpnlinkRole(vpnlink *common.VpnlinkVO) {
 	vpnlink.Client.Role = client.SysInfo.AgentType
 }
 
-// @Summary 在两个节点之间建立Vpn链路
+// @Summary 在两个节点之间建立Vpn链路（CPE/HUB-VPE，CPE-HUB）
 // @Description 示例：
 // @Description {
 // @Description "id": 102,
@@ -37,10 +37,10 @@ func initVpnlinkRole(vpnlink *common.VpnlinkVO) {
 // @Tags Link
 // @Accept  json
 // @Produce  json
-// @Param data body common.VpnlinkVO true "Tunnel信息"
+// @Param data body common.VpnlinkVO true "链路信息"
 // @Success 200  {string} string  "结果描述"
-// @Router /v2/link/createvpnlink [post]
-func CreateVpnlink(c *gin.Context) {
+// @Router /v2/link/createcpevpn [post]
+func CreateCpeVpn(c *gin.Context) {
 	vpnlink := common.VpnlinkVO{}
 	c.BindJSON(&vpnlink)
 	vpnlink.InitKey()
@@ -71,7 +71,7 @@ func CreateVpnlink(c *gin.Context) {
 	// c.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
-// @Summary 删除指定的vpnlink
+// @Summary 删除指定的Vpn链路
 // @Description 示例：
 // @Description {
 // @Description "id": 102,
@@ -86,10 +86,10 @@ func CreateVpnlink(c *gin.Context) {
 // @Tags Link
 // @Accept  json
 // @Produce  json
-// @Param data body common.VpnlinkVO true "Tunnel信息"
+// @Param data body common.VpnlinkVO true "链路信息"
 // @Success 200  {string} string  "结果描述"
-// @Router /v2/link/removevpnlink [post]
-func RemoveVpnlink(c *gin.Context) {
+// @Router /v2/link/removecpevpn [post]
+func RemoveCpeVpn(c *gin.Context) {
 	vpnlink := common.VpnlinkVO{}
 	c.BindJSON(&vpnlink)
 	server := common.NewRequestTaskWithBody(

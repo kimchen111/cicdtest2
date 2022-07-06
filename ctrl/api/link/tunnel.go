@@ -16,14 +16,14 @@ func initTunnelRole(tunnel *common.TunnelVO) {
 	tunnel.PeerB.Role = b.SysInfo.AgentType
 }
 
-func initHubDirlinkRole(hdl *common.HubDirlinkVO) {
+func initHubDirlinkRole(hdl *common.HubMstpVO) {
 	a := device.GetGDM().GetDevice(hdl.PeerA.Esn)
 	hdl.PeerA.Role = a.SysInfo.AgentType
 	b := device.GetGDM().GetDevice(hdl.PeerB.Esn)
 	hdl.PeerB.Role = b.SysInfo.AgentType
 }
 
-// @Summary 在两个站点之间建立固定的TUNNEL隧道
+// @Summary 在两个站点之间建立TUNNEL隧道（HUB-HUB）
 // @Description 示例：
 // @Description {
 // @Description "id": 321,
@@ -37,14 +37,14 @@ func initHubDirlinkRole(hdl *common.HubDirlinkVO) {
 // @Description 	"ipaddr": "192.168.3.1"
 // @Description }
 // @Description }
-// @Description 仅在HUB与HUB之间使用，因此，必须先setuphub
+// @Description 仅在HUB与HUB之间使用，因此必须先setuphub
 // @Tags Link
 // @Accept  json
 // @Produce  json
 // @Param data body common.TunnelVO true "Tunnel信息"
 // @Success 200  {string} string  "结果描述"
-// @Router /v2/link/createtunnel [post]
-func CreateTunnel(c *gin.Context) {
+// @Router /v2/link/createhubtunnel [post]
+func CreateHubTunnel(c *gin.Context) {
 	tunnel := common.TunnelVO{}
 	c.BindJSON(&tunnel)
 
@@ -89,8 +89,8 @@ func createTunnel(vt common.VxlanTunnelVO) common.ApiResult {
 // @Produce  json
 // @Param data body common.TunnelVO true "Tunnel信息"
 // @Success 200  {string} string  "结果描述"
-// @Router /v2/link/removetunnel [post]
-func RemoveTunnel(c *gin.Context) {
+// @Router /v2/link/removehubtunnel [post]
+func RemoveHubTunnel(c *gin.Context) {
 	tunnel := common.TunnelVO{}
 	c.BindJSON(&tunnel)
 
@@ -118,7 +118,7 @@ func removeTunnel(vt common.VxlanTunnelVO) common.ApiResult {
 
 }
 
-// @Summary 在两个站点之间设置专线链路
+// @Summary 在两个站点之间设置专线链路（HUB-HUB）
 // @Description 示例：
 // @Description {
 // @Description "id": 321,
@@ -138,11 +138,11 @@ func removeTunnel(vt common.VxlanTunnelVO) common.ApiResult {
 // @Tags Link
 // @Accept  json
 // @Produce  json
-// @Param data body common.TunnelVO true "Tunnel信息"
+// @Param data body common.HubMstpVO true "专线信息"
 // @Success 200  {string} string  "结果描述"
-// @Router /v2/link/createhubdirlink [post]
-func CreateHubDirlink(c *gin.Context) {
-	hdl := common.HubDirlinkVO{}
+// @Router /v2/link/createhubmstp [post]
+func CreateHubMstp(c *gin.Context) {
+	hdl := common.HubMstpVO{}
 	c.BindJSON(&hdl)
 	initHubDirlinkRole(&hdl)
 
@@ -154,7 +154,7 @@ func CreateHubDirlink(c *gin.Context) {
 	peera := common.NewRequestTaskWithBody(
 		hdl.PeerA.Esn,
 		common.CpeTaskClass.Link,
-		common.CpeLinkTaskType.AddHubDirlink,
+		common.CpeLinkTaskType.AddHubMstpEndpoint,
 		hdl,
 	)
 	r_peera := agent.Request(peera)
@@ -162,7 +162,7 @@ func CreateHubDirlink(c *gin.Context) {
 	peerb := common.NewRequestTaskWithBody(
 		hdl.PeerB.Esn,
 		common.CpeTaskClass.Link,
-		common.CpeLinkTaskType.AddHubDirlink,
+		common.CpeLinkTaskType.AddHubMstpEndpoint,
 		hdl,
 	)
 	r_peerb := agent.Request(peerb)
@@ -186,16 +186,16 @@ func CreateHubDirlink(c *gin.Context) {
 // @Tags Link
 // @Accept  json
 // @Produce  json
-// @Param data body common.VpnlinkVO true "专线信息"
+// @Param data body common.HubMstpVO true "专线信息"
 // @Success 200  {string} string  "结果描述"
-// @Router /v2/link/removehubdirlink [post]
-func RemoveHubDirlink(c *gin.Context) {
-	hdl := common.HubDirlinkVO{}
+// @Router /v2/link/removehubmstp [post]
+func RemoveHubMstp(c *gin.Context) {
+	hdl := common.HubMstpVO{}
 	c.BindJSON(&hdl)
 	peera := common.NewRequestTaskWithBody(
 		hdl.PeerA.Esn,
 		common.CpeTaskClass.Link,
-		common.CpeLinkTaskType.DelHubDirlink,
+		common.CpeLinkTaskType.DelHubMstpEndpoint,
 		hdl,
 	)
 	ra := agent.Request(peera)
@@ -203,7 +203,7 @@ func RemoveHubDirlink(c *gin.Context) {
 	peerb := common.NewRequestTaskWithBody(
 		hdl.PeerB.Esn,
 		common.CpeTaskClass.Link,
-		common.CpeLinkTaskType.DelHubDirlink,
+		common.CpeLinkTaskType.DelHubMstpEndpoint,
 		hdl,
 	)
 	rb := agent.Request(peerb)
