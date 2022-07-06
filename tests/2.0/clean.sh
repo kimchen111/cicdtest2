@@ -8,9 +8,9 @@ echo "CPE1: *CPE1"
 echo "CPE2: *CPE2"
 echo "CPE4: *CPE4"
 
-echo "CPE1-VPE1 removevpnlink"
+echo "CPE1-VPE1 removecpevpn"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/removevpnlink' \
+  'http://192.168.236.236:18080/v2/link/removecpevpn' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -26,9 +26,9 @@ curl -X 'POST' \
 echo
 echo "====="
 
-echo "CPE2-VPE2 removevpnlink"
+echo "CPE2-VPE2 removecpevpn"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/removevpnlink' \
+  'http://192.168.236.236:18080/v2/link/removecpevpn' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -44,9 +44,9 @@ curl -X 'POST' \
 echo
 echo "====="
 
-echo "CPE1-VPE4 removevpnlink"
+echo "CPE1-VPE4 removecpevpn"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/removevpnlink' \
+  'http://192.168.236.236:18080/v2/link/removecpevpn' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{

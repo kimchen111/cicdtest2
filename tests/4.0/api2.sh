@@ -187,7 +187,7 @@ echo
 
 echo "删除HUB1A-HUB1B的隧道"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/removetunnel' \
+  'http://192.168.236.236:18080/v2/link/removehubtunnel' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -205,9 +205,9 @@ echo "=================="
 
 
 ##删除VPN LINK
-echo "HUB-1A至VPE-1 removevpnlink"
+echo "HUB-1A至VPE-1 removecpevpn"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/removevpnlink' \
+  'http://192.168.236.236:18080/v2/link/removecpevpn' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -224,9 +224,9 @@ curl -X 'POST' \
 echo
 echo "========================="
 
-echo "HUB-1B至VPE-2 removevpnlink"
+echo "HUB-1B至VPE-2 removecpevpn"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/removevpnlink' \
+  'http://192.168.236.236:18080/v2/link/removecpevpn' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -243,9 +243,9 @@ curl -X 'POST' \
 echo
 echo "========================="
 
-echo "CPE-4至HUB-1A removevpnlink"
+echo "CPE-4至HUB-1A removecpevpn"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/removevpnlink' \
+  'http://192.168.236.236:18080/v2/link/removecpevpn' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -262,9 +262,9 @@ curl -X 'POST' \
 echo
 echo "========================="
 
-echo "HUB-1B至VPE-2 removevpnlink"
+echo "HUB-1B至VPE-2 removecpevpn"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/removevpnlink' \
+  'http://192.168.236.236:18080/v2/link/removecpevpn' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{

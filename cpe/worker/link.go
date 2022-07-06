@@ -102,8 +102,9 @@ func (link Link) AddTunnelEndpoint(msg common.Message) {
 		if _, ok := uci.Get("network", name, "proto"); !ok {
 			log.Printf("Add %s type interface", name)
 			//vxlan dev
-			uci.AddSection("network", name, "device")
+			uci.AddSection("network", name, "interface")
 			uci.Set("network", name, "proto", "vxlan")
+			uci.Set("network", name, "name", name)
 			uci.Set("network", name, "ipaddr", vtvo.SelfIpaddr)
 			uci.Set("network", name, "peeraddr", vtvo.RemoteIpaddr)
 			uci.Set("network", name, "port", strconv.Itoa(vtvo.Port()))
@@ -148,7 +149,7 @@ func (link Link) DelTunnelEndpoint(msg common.Message) {
 	Response(msg.ToResult("failed: payload error"))
 } //删除HUB的TUNNEL端点
 
-func (link Link) AddHubDirlink(msg common.Message) {
+func (link Link) AddHubMstpEndpoint(msg common.Message) {
 	dl := common.MstpVO{}
 	if err := common.LoadBody(msg.Body, &dl); err == nil {
 		dle := dl.GetEndpoint()
@@ -176,7 +177,7 @@ func (link Link) AddHubDirlink(msg common.Message) {
 	Response(msg.ToResult("failed: payload error"))
 } //创建HUB的TUNNEL端点
 
-func (link Link) DelHubDirlink(msg common.Message) {
+func (link Link) DelHubMstpEndpoint(msg common.Message) {
 	dl := common.MstpVO{}
 	if err := common.LoadBody(msg.Body, &dl); err == nil {
 		dle := dl.GetEndpoint()
