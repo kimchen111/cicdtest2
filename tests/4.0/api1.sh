@@ -50,9 +50,9 @@ echo
 echo "========================="
 
 ##创建VPN LINK
-echo "CPE-3至VPE-1 createvpnlink"
+echo "CPE-3至VPE-1 createcpevpn"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/createvpnlink' \
+  'http://192.168.236.236:18080/v2/link/createcpevpn' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -74,9 +74,9 @@ curl -X 'POST' \
 echo
 echo "========================="
 
-echo "CPE-3至VPE-2 createvpnlink"
+echo "CPE-3至VPE-2 createcpevpn"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/createvpnlink' \
+  'http://192.168.236.236:18080/v2/link/createcpevpn' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -98,9 +98,9 @@ curl -X 'POST' \
 echo
 echo "========================="
 
-echo "CPE-2至VPE-2 createvpnlink"
+echo "CPE-2至VPE-2 createcpevpn"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/createvpnlink' \
+  'http://192.168.236.236:18080/v2/link/createcpevpn' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -122,9 +122,9 @@ curl -X 'POST' \
 echo
 echo "========================="
 
-echo "CPE-1至VPE-2 createvpnlink"
+echo "CPE-1至VPE-2 createcpevpn"
 curl -X 'POST' \
-  'http://192.168.236.236:18080/v2/link/createvpnlink' \
+  'http://192.168.236.236:18080/v2/link/createcpevpn' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
