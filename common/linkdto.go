@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/digineo/go-uci"
@@ -593,15 +592,12 @@ template bgp HUB_TEMP {
 
 func (link *LinkVO) FirstLink() bool {
 	ifaces, _ := uci.GetSections("network", "interface")
-	wgregexp, _ := regexp.Compile("^wg.*")
-	dirregexp, _ := regexp.Compile("^dir.*")
 	count := 0
 	for _, iface := range ifaces {
-		if wgregexp.MatchString(iface) || dirregexp.MatchString(iface) {
+		if _, ok := uci.Get("network", iface, "link"); ok {
 			count++
 		}
 	}
-	// log.Println("Current ifaces: ", ifaces)
 	return count == 0
 }
 
@@ -884,7 +880,7 @@ func (dl *MstpVO) CommonLinkVO() LinkVO {
 }
 
 func (dl *MstpVO) PeerRole() string {
-	return dl.GetSelfEndpoint().Role
+	return dl.GetPeerEndpoint().Role
 }
 
 func (dl *MstpVO) SelfIntfPureAddr() string {

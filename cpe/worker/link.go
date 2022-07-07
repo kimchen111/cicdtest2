@@ -272,10 +272,10 @@ func (link Link) AddVpnEndpoint(msg common.Message) {
 		} else {
 			uci.Set("network", wgname, "private_key", vpnlink.Client.PrivKey)
 			uci.Set("network", wgname, "addresses", vpnlink.Client.IntfAddr)
+			uci.Set("network", wgname, "link", "1")
 			uci.Set("network", peername, "public_key", vpnlink.Server.PubKey())
 			uci.Set("network", peername, "endpoint_host", vpnlink.Server.ListenAddr)
 			uci.Set("network", peername, "endpoint_port", fmt.Sprintf("%d", vpnlink.ListenPort()))
-
 		}
 		if !IsHub() {
 			state := GetPreState()
@@ -391,6 +391,7 @@ func (link Link) AddMstpEndpoint(msg common.Message) {
 		uci.Set("network", intfname, "device", intfname)
 		uci.Set("network", intfname, "ipaddr", addr)
 		uci.Set("network", intfname, "netmask", netmask)
+		uci.Set("network", intfname, "link", "1")
 		if !IsHub() {
 			state := GetPreState()
 			if state == "" {
@@ -431,7 +432,7 @@ func (link Link) DelMstpEndpoint(msg common.Message) {
 		DelVnetZone(intfname)
 		uci.Commit()
 		ReloadFirewall()
-		// DisableBirdInclude(common.CpeBirdConfPath, vpnlink.NeighFileName())
+		DisableBirdInclude(common.CpeBirdConfPath, mstp.BirdNeighFileName())
 		Response(msg.ToResult("success"))
 		return
 	}
