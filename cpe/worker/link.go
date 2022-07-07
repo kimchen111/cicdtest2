@@ -101,7 +101,6 @@ func (link Link) AddTunnelEndpoint(msg common.Message) {
 		name := vtvo.VxlanName()
 		if _, ok := uci.Get("network", name, "proto"); !ok {
 			log.Printf("Add %s type interface", name)
-			//vxlan dev
 			uci.AddSection("network", name, "interface")
 			uci.Set("network", name, "proto", "vxlan")
 			uci.Set("network", name, "name", name)
@@ -109,20 +108,18 @@ func (link Link) AddTunnelEndpoint(msg common.Message) {
 			uci.Set("network", name, "peeraddr", vtvo.RemoteIpaddr)
 			uci.Set("network", name, "port", strconv.Itoa(vtvo.Port()))
 			uci.Set("network", name, "vid", strconv.Itoa(vtvo.Vni))
-			brdevname := vtvo.BridgeDevName()
-			AddDevToBridge(brdevname, name)
-
-			// ruleName := fmt.Sprintf("vl%d", vtvo.Id)
-			AllowIncoming(name, vtvo.RemoteIpaddr, vtvo.SelfIpaddr, vtvo.Port())
-			uci.Commit()
-			InterfaceUp(name)
-			ReloadFirewall()
-			Response(msg.ToResult("success"))
-			return
-		} else {
-			Response(msg.ToResult("success: exits"))
-			return
 		}
+		brdevname := vtvo.BridgeDevName()
+		AddDevToBridge(brdevname, name)
+
+		// ruleName := fmt.Sprintf("vl%d", vtvo.Id)
+		AllowIncoming(name, vtvo.RemoteIpaddr, vtvo.SelfIpaddr, vtvo.Port())
+		uci.Commit()
+		InterfaceUp(name)
+		ReloadFirewall()
+		RestartNetwork()
+		Response(msg.ToResult("success"))
+		return
 	}
 	Response(msg.ToResult("failed: payload error"))
 } //创建HUB的TUNNEL端点
@@ -134,17 +131,14 @@ func (link Link) DelTunnelEndpoint(msg common.Message) {
 		InterfaceDown(name)
 		if _, ok := uci.Get("network", name, "proto"); ok {
 			uci.DelSection("network", name)
-			RemoveIncoming(vtvo.Id)
-			brdevname := vtvo.BridgeDevName()
-			DelDevFromBridge(brdevname, name)
-			uci.Commit()
-			ReloadFirewall()
-			Response(msg.ToResult("success"))
-			return
-		} else {
-			Response(msg.ToResult("success: removed"))
-			return
 		}
+		RemoveIncoming(vtvo.Id)
+		brdevname := vtvo.BridgeDevName()
+		DelDevFromBridge(brdevname, name)
+		uci.Commit()
+		ReloadFirewall()
+		Response(msg.ToResult("success"))
+		return
 	}
 	Response(msg.ToResult("failed: payload error"))
 } //删除HUB的TUNNEL端点

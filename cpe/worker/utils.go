@@ -246,8 +246,9 @@ func InterfaceUp(intf string) bool {
 	return err == nil
 }
 func InterfaceDown(intf string) bool {
-	err := exec.Command("ifdown", intf).Run()
-	return err == nil
+	exec.Command("ifdown", intf).Run()
+	exec.Command("ip", "li", "del", intf).Run()
+	return true
 }
 func SetupWireguard(name string) {
 	s := time.After(time.Second * 1)
@@ -270,6 +271,9 @@ func AddIpaddr(intf string, ipaddr string) {
 	nl, _ := netlink.LinkByName(intf)
 	addr, _ := netlink.ParseAddr(ipaddr)
 	netlink.AddrAdd(nl, addr)
+}
+func RestartNetwork() {
+	exec.Command("/etc/init.d/network", "restart").Run()
 }
 func ReloadNetwork() {
 	exec.Command("/etc/init.d/network", "reload").Run()
