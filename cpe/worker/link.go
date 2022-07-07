@@ -69,17 +69,17 @@ func (link Link) DestroyHub(msg common.Message) {
 	if err := common.LoadBody(msg.Body, &hubvo); err == nil {
 		brdevname := hubvo.BridgeDevName()
 		briname := hubvo.BridgeName()
+		InterfaceDown(briname)
 		if _, ok := uci.Get("network", briname, "proto"); ok {
+			log.Printf("delSection briname: %s", briname)
 			uci.DelSection("network", briname)
 		}
 		if _, ok := uci.Get("network", brdevname, "type"); ok {
+			log.Printf("delSection brdevname: %s", brdevname)
 			uci.DelSection("network", brdevname)
 		}
 		DelVnetZone(briname)
 		uci.Commit()
-		if ok := InterfaceDown(briname); !ok {
-			log.Println("set interface down failed .")
-		}
 		ReloadFirewall()
 		// if ok := hubvo.Removeridge(); !ok {
 		// 	Response(msg.ToResult("failed: delete bridge"))
@@ -131,14 +131,14 @@ func (link Link) DelTunnelEndpoint(msg common.Message) {
 	vtvo := common.VxlanTunnelVO{}
 	if err := common.LoadBody(msg.Body, &vtvo); err == nil {
 		name := vtvo.VxlanName()
+		InterfaceDown(name)
 		if _, ok := uci.Get("network", name, "proto"); ok {
 			uci.DelSection("network", name)
 			RemoveIncoming(vtvo.Id)
-			uci.Commit()
-			ReloadFirewall()
 			brdevname := vtvo.BridgeDevName()
 			DelDevFromBridge(brdevname, name)
-			InterfaceDown(name)
+			uci.Commit()
+			ReloadFirewall()
 			Response(msg.ToResult("success"))
 			return
 		} else {
@@ -152,27 +152,25 @@ func (link Link) DelTunnelEndpoint(msg common.Message) {
 func (link Link) AddHubMstpEndpoint(msg common.Message) {
 	dl := common.MstpVO{}
 	if err := common.LoadBody(msg.Body, &dl); err == nil {
-		dle := dl.GetEndpoint()
-		devname := dle.DevName()
-		if _, ok := uci.Get("network", devname, "type"); !ok {
-			if dle.WithVlanIntf() {
+		dle := dl.GetSelfEndpoint()
+		intfname := dle.InterfaceName()
+		if dle.WithVlanIntf() {
+			devname := dle.DevName()
+			if _, ok := uci.Get("network", devname, "type"); !ok {
 				uci.AddSection("network", devname, "device")
 				uci.Set("network", devname, "type", "8021q")
 				uci.Set("network", devname, "ifname", dle.IntfName)
 				uci.Set("network", devname, "vid", strconv.Itoa(dle.VlanId))
-				uci.Set("network", devname, "name", devname)
+				uci.Set("network", devname, "name", intfname)
 				uci.Set("network", devname, "ipv6", "0")
 			}
-			brdevname := dl.BridgeDevName()
-			AddDevToBridge(brdevname, devname)
-			uci.Commit()
-			InterfaceUp(devname)
-			Response(msg.ToResult("success"))
-			return
-		} else {
-			Response(msg.ToResult("success: exits"))
-			return
 		}
+		brdevname := dl.BridgeDevName()
+		AddDevToBridge(brdevname, intfname)
+		uci.Commit()
+		InterfaceUp(intfname)
+		Response(msg.ToResult("success"))
+		return
 	}
 	Response(msg.ToResult("failed: payload error"))
 } //创建HUB的TUNNEL端点
@@ -180,20 +178,20 @@ func (link Link) AddHubMstpEndpoint(msg common.Message) {
 func (link Link) DelHubMstpEndpoint(msg common.Message) {
 	dl := common.MstpVO{}
 	if err := common.LoadBody(msg.Body, &dl); err == nil {
-		dle := dl.GetEndpoint()
-		devname := dle.DevName()
-		if _, ok := uci.Get("network", devname, "type"); ok {
-			uci.DelSection("network", devname)
-			uci.Commit()
-			brdevname := dl.BridgeDevName()
-			DelDevFromBridge(brdevname, devname)
-			InterfaceDown(devname)
-			Response(msg.ToResult("success"))
-			return
-		} else {
-			Response(msg.ToResult("success: removed"))
-			return
+		dle := dl.GetSelfEndpoint()
+		intfname := dle.InterfaceName()
+		InterfaceDown(intfname)
+		if dle.WithVlanIntf() {
+			devname := dle.DevName()
+			if _, ok := uci.Get("network", devname, "type"); ok {
+				uci.DelSection("network", devname)
+			}
 		}
+		brdevname := dl.BridgeDevName()
+		DelDevFromBridge(brdevname, intfname)
+		uci.Commit()
+		Response(msg.ToResult("success"))
+		return
 	}
 	Response(msg.ToResult("failed: payload error"))
 } //删除HUB的TUNNEL端点
@@ -309,6 +307,7 @@ func (link Link) DelVpnEndpoint(msg common.Message) {
 	vpnlink := common.VpnlinkVO{}
 	if err := common.LoadBody(msg.Body, &vpnlink); err == nil {
 		wgname := vpnlink.IntfName()
+		InterfaceDown(wgname)
 		if _, ok := uci.Get("network", wgname, "proto"); ok {
 			uci.DelSection("network", wgname)
 			typename := fmt.Sprintf("wireguard_%s", wgname)
@@ -322,11 +321,6 @@ func (link Link) DelVpnEndpoint(msg common.Message) {
 			}
 			DelVnetZone(wgname)
 			uci.Commit()
-			if ok := InterfaceDown(wgname); !ok {
-				log.Println("Wireguard interface failed down.")
-				Response(msg.ToResult("failed: cann't down"))
-				return
-			}
 			ReloadFirewall()
 			DisableBirdInclude(common.CpeBirdConfPath, vpnlink.BirdNeighFileName())
 			Response(msg.ToResult("success"))
@@ -386,23 +380,23 @@ config interface 'eth5_2002'
 func (link Link) AddMstpEndpoint(msg common.Message) {
 	dl := common.MstpVO{}
 	if err := common.LoadBody(msg.Body, &dl); err == nil {
-		dle := dl.GetEndpoint()
-		name := dle.InterfaceName()
+		dle := dl.GetSelfEndpoint()
+		intfname := dle.InterfaceName()
 		if dle.WithVlanIntf() {
 			devname := dle.DevName()
 			uci.AddSection("network", devname, "device")
 			uci.Set("network", devname, "type", "8021q")
 			uci.Set("network", devname, "ifname", dle.IntfName)
 			uci.Set("network", devname, "vid", strconv.Itoa(dle.VlanId))
-			uci.Set("network", devname, "name", name)
+			uci.Set("network", devname, "name", intfname)
 			uci.Set("network", devname, "ipv6", "0")
 		}
 		addr, netmask := common.Cidr2AddrMask(dle.IntfAddr)
-		uci.AddSection("network", name, "interface")
-		uci.Set("network", name, "proto", "static")
-		uci.Set("network", name, "device", name)
-		uci.Set("network", name, "ipaddr", addr)
-		uci.Set("network", name, "netmask", netmask)
+		uci.AddSection("network", intfname, "interface")
+		uci.Set("network", intfname, "proto", "static")
+		uci.Set("network", intfname, "device", intfname)
+		uci.Set("network", intfname, "ipaddr", addr)
+		uci.Set("network", intfname, "netmask", netmask)
 		if !IsHub() {
 			state := GetPreState()
 			if state == "" {
@@ -411,10 +405,10 @@ func (link Link) AddMstpEndpoint(msg common.Message) {
 			dl.SetDevState(state)
 			SetupCpeBird(&dl)
 		}
-		AddVnetZone(name)
+		AddVnetZone(intfname)
 		uci.Commit()
-		if ok := InterfaceUp(name); !ok {
-			log.Printf("Interface setup %s failed.", name)
+		if ok := InterfaceUp(intfname); !ok {
+			log.Printf("Interface setup %s failed.", intfname)
 		}
 		ReloadFirewall()
 		Response(msg.ToResult("success"))
@@ -423,32 +417,29 @@ func (link Link) AddMstpEndpoint(msg common.Message) {
 	Response(msg.ToResult("failed: unknown error"))
 } //新建直连专线链路的网卡
 
-func (link Link) DelDirEndpoint(msg common.Message) {
+func (link Link) DelMstpEndpoint(msg common.Message) {
 	mstp := common.MstpVO{}
 	if err := common.LoadBody(msg.Body, &mstp); err == nil {
-		dle := mstp.GetEndpoint()
-		name := dle.InterfaceName()
-		if _, ok := uci.Get("network", name, "proto"); ok {
-			uci.DelSection("network", name)
+		dle := mstp.GetSelfEndpoint()
+		intfname := dle.InterfaceName()
+		InterfaceDown(intfname)
+		if _, ok := uci.Get("network", intfname, "proto"); ok {
+			log.Printf("DelSection interface: %s", intfname)
+			uci.DelSection("network", intfname)
+		}
+		if dle.WithVlanIntf() {
 			devname := dle.DevName()
 			if _, ok := uci.Get("network", devname, "type"); ok {
+				log.Printf("DelSection device: %s", devname)
 				uci.DelSection("network", devname)
 			}
-			DelVnetZone(name)
-			uci.Commit()
-			if ok := InterfaceDown(name); !ok {
-				log.Println("Set dirlink interface down failed.")
-				Response(msg.ToResult("failed: cann't down"))
-				return
-			}
-			ReloadFirewall()
-			// DisableBirdInclude(common.CpeBirdConfPath, vpnlink.NeighFileName())
-			Response(msg.ToResult("success"))
-			return
-		} else {
-			Response(msg.ToResult("success"))
-			return
 		}
+		DelVnetZone(intfname)
+		uci.Commit()
+		ReloadFirewall()
+		// DisableBirdInclude(common.CpeBirdConfPath, vpnlink.NeighFileName())
+		Response(msg.ToResult("success"))
+		return
 	}
 	Response(msg.ToResult("failed: unknown error"))
 } //删除直连专线链路的网卡

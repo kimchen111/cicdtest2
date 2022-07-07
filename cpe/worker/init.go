@@ -5,8 +5,6 @@ import (
 	"log"
 	"os/exec"
 	"sdwan/common"
-
-	uci "github.com/digineo/go-uci"
 )
 
 func InitConfig() {
@@ -16,7 +14,7 @@ func InitConfig() {
 	InitVxlanConfDir()
 	PrepareQos()
 	PrepareBirdResetScript()
-	RenameLandev()
+	// RenameLandev()
 }
 
 func InitSystem() {
@@ -62,6 +60,7 @@ func InitVnetZone() {
 	uci set network.lan.device='brlan'
 	uci commit network
 */
+/*
 func RenameLandev() {
 	if _, ok := uci.Get("network", "landev", "name"); !ok {
 		exec.Command("uci", "rename", "network.@device[0]=landev").Run()
@@ -69,3 +68,4 @@ func RenameLandev() {
 		exec.Command("/etc/init.d/network", "restart").Run()
 	}
 }
+*/

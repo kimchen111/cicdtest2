@@ -16,7 +16,7 @@ func initTunnelRole(tunnel *common.TunnelVO) {
 	tunnel.PeerB.Role = b.SysInfo.AgentType
 }
 
-func initHubDirlinkRole(hdl *common.HubMstpVO) {
+func initHubMstpRole(hdl *common.MstpVO) {
 	a := device.GetGDM().GetDevice(hdl.PeerA.Esn)
 	hdl.PeerA.Role = a.SysInfo.AgentType
 	b := device.GetGDM().GetDevice(hdl.PeerB.Esn)
@@ -138,13 +138,13 @@ func removeTunnel(vt common.VxlanTunnelVO) common.ApiResult {
 // @Tags Link
 // @Accept  json
 // @Produce  json
-// @Param data body common.HubMstpVO true "专线信息"
+// @Param data body common.MstpVO true "专线信息"
 // @Success 200  {string} string  "结果描述"
 // @Router /v2/link/createhubmstp [post]
 func CreateHubMstp(c *gin.Context) {
-	hdl := common.HubMstpVO{}
+	hdl := common.MstpVO{}
 	c.BindJSON(&hdl)
-	initHubDirlinkRole(&hdl)
+	initHubMstpRole(&hdl)
 
 	if hdl.PeerA.Role == "CPE" || hdl.PeerB.Role == "CPE" {
 		c.JSON(http.StatusOK, common.ApiResult{Status: "error", Body: "failed: Role error"})
@@ -186,11 +186,11 @@ func CreateHubMstp(c *gin.Context) {
 // @Tags Link
 // @Accept  json
 // @Produce  json
-// @Param data body common.HubMstpVO true "专线信息"
+// @Param data body common.MstpVO true "专线信息"
 // @Success 200  {string} string  "结果描述"
 // @Router /v2/link/removehubmstp [post]
 func RemoveHubMstp(c *gin.Context) {
-	hdl := common.HubMstpVO{}
+	hdl := common.MstpVO{}
 	c.BindJSON(&hdl)
 	peera := common.NewRequestTaskWithBody(
 		hdl.PeerA.Esn,

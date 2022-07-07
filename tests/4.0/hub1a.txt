@@ -3,10 +3,5 @@ uci set network.wan.ipaddr='192.168.122.220'
 uci set network.wan.netmask='255.255.255.0'
 uci set network.wan.gateway='192.168.122.1'
 
-uci add network route # =cfg08c8b4
-uci set network.@route[-1].target='10.10.10.0/24'
-uci set network.@route[-1].gateway='192.168.122.254'
-uci set network.@route[-1].interface='wan'
-
 uci commit
 service network reload

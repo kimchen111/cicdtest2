@@ -466,7 +466,11 @@ func DelLanZone(name string) {
 		}
 	}
 	log.Printf("new firewall.network: %s", lanlist)
-	uci.Set("firewall", "@zone[0]", "network", lanlist[:i]...)
+	if i > 0 {
+		uci.Set("firewall", "@zone[0]", "network", lanlist[:i]...)
+	} else {
+		uci.Del("firewall", "@zone[0]", "network")
+	}
 }
 
 func AddVnetZone(name string) {

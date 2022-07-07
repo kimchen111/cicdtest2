@@ -34,6 +34,12 @@ sed -i "s/*HUB1A/${HUB1A}/g" ${fname}
 [ "${HUB1B}" != "" ] && {
 sed -i "s/*HUB1B/${HUB1B}/g" ${fname}
 }
+[ "${HUB2A}" != "" ] && {
+sed -i "s/*HUB2A/${HUB2A}/g" ${fname}
+}
+[ "${HUB2B}" != "" ] && {
+sed -i "s/*HUB2B/${HUB2B}/g" ${fname}
+}
 [ "${CPE3A}" != "" ] && {
 sed -i "s/*CPE3A/${CPE3A}/g" ${fname}
 }
@@ -45,5 +51,8 @@ sed -i "s/*CPE3/${CPE3}/g" ${fname}
 }
 [ "${CPE4}" != "" ] && {
 sed -i "s/*CPE4/${CPE4}/g" ${fname}
+}
+[ "${CPE5}" != "" ] && {
+sed -i "s/*CPE5/${CPE5}/g" ${fname}
 }
 }

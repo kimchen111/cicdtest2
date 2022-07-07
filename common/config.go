@@ -79,7 +79,8 @@ type CpeConfig struct {
 	vpeDetectURL     string
 	netflowCollector string
 	localListen      string
-	disablePost      string
+	disableMonitor   string //总的监控开关
+	disablePost      string //上报数据的开关，先有上面的开启监控，才可能会判断是否要POST
 }
 
 func (cc *CpeConfig) Init() {
@@ -94,6 +95,7 @@ func (cc *CpeConfig) Init() {
 	cc.vpeDetectURL = config["vpeDetectUrl"]
 	cc.netflowCollector = config["netflowCollector"]
 	cc.localListen = config["localListen"]
+	cc.disableMonitor = config["disableMonitor"]
 	cc.disablePost = config["disablePost"]
 	mac := GetIntfMacaddr(CpeEsnDev)
 	cc.baseConfig.esn = strings.ReplaceAll(mac, ":", "")
@@ -123,6 +125,9 @@ func (cc *CpeConfig) GetLocalListen() string {
 }
 func (cc *CpeConfig) DisablePost() bool {
 	return cc.disablePost == "true"
+}
+func (cc *CpeConfig) DisableMonitor() bool {
+	return cc.disableMonitor == "true"
 }
 
 type VpeConfig struct {

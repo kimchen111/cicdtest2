@@ -53,7 +53,7 @@ type LanVO struct {
 func (lan LanVO) BridgeName() string {
 	return fmt.Sprintf("br-%s", lan.Name)
 }
-func (lan LanVO) BridgeDevName() string {
+func (lan LanVO) DevName() string {
 	return fmt.Sprintf("%sdev", lan.Name)
 }
 

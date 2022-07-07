@@ -1,5 +1,5 @@
 uci set network.wan.proto='static'
-uci set network.wan.ipaddr='192.168.122.221'
+uci set network.wan.ipaddr='192.168.122.202'
 uci set network.wan.netmask='255.255.255.0'
 uci set network.wan.gateway='192.168.122.1'
 

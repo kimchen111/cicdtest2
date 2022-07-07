@@ -518,7 +518,7 @@ func wgGetAllowedIps(name string, pubkey string) []string {
 */
 
 func SetupDirlinkIntf(dl common.MstpVO) (string, bool) {
-	dle := dl.Server
+	dle := dl.GetSelfEndpoint()
 	if ok := common.CreateVlanIntf(dle.IntfName, dle.VlanId, dl.VlanifName()); !ok {
 		log.Printf("Create vlan intface %s failed.", dl.VlanifName())
 		return "failed: create vlan interface", false

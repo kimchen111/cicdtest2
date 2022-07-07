@@ -231,6 +231,9 @@ func (m *Monitor) StartMonitor() {
 var monitor *Monitor
 
 func StartCpeMonitor() {
+	if common.GCC.DisableMonitor() {
+		return
+	}
 	s := time.After(time.Second * 5)
 	<-s
 	role := common.GBC.GetAgentType()

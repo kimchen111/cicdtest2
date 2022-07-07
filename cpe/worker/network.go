@@ -40,7 +40,7 @@ func (network Network) AddLAN(msg common.Message) {
 	if err := common.LoadBody(msg.Body, &lan); err == nil {
 		if _, ok := uci.Get("network", lan.Name, "device"); !ok {
 			brname := lan.BridgeName()
-			devname := lan.BridgeDevName()
+			devname := lan.DevName()
 			uci.AddSection("network", devname, "device")
 			uci.Set("network", devname, "name", brname)
 			uci.Set("network", devname, "type", "bridge")
@@ -54,7 +54,7 @@ func (network Network) AddLAN(msg common.Message) {
 
 			AddLanZone(lan.Name)
 			uci.Commit()
-			ReloadNetwork()
+			InterfaceUp(brname)
 			ReloadFirewall()
 			Response(msg.ToResult("success"))
 			return
@@ -69,19 +69,23 @@ func (network Network) AddLAN(msg common.Message) {
 func (network Network) DelLAN(msg common.Message) {
 	lan := common.LanVO{}
 	if err := common.LoadBody(msg.Body, &lan); err == nil {
-		if _, ok := uci.Get("network", lan.Name, "device"); ok {
-			uci.DelSection("network", lan.Name)
-			uci.DelSection("network", lan.BridgeName())
-			DelLanZone(lan.Name)
-			uci.Commit()
-			ReloadNetwork()
-			ReloadFirewall()
-			Response(msg.ToResult("success"))
-			return
-		} else {
-			Response(msg.ToResult("failed: no exits"))
-			return
+		brname := lan.BridgeName()
+		InterfaceDown(brname)
+		devname := lan.DevName()
+		if _, ok := uci.Get("network", devname, "type"); ok {
+			uci.DelSection("network", devname)
 		}
+		intfname := lan.Name
+		if _, ok := uci.Get("network", intfname, "proto"); ok {
+			uci.DelSection("network", intfname)
+		}
+
+		DelLanZone(lan.Name)
+		uci.Commit()
+		// ReloadNetwork()
+		ReloadFirewall()
+		Response(msg.ToResult("success"))
+		return
 	}
 	Response(msg.ToResult("failed: unknown error"))
 } //删除LAN网段

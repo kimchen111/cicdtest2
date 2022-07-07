@@ -1,3 +1,15 @@
+
+# AGENT启动方法
+#### VPE-AGENT VPE-1 VPE-2 VPE-3 VPE-4 
+    wget http://192.168.236.236:18080/tests/startva -O startva
+    sh startva
+
+注意修改配置文件
+
+#### CPE-AGENT CPE-1 CPE-2 CPE-3 CPE-4 
+    wget http://192.168.236.236:18080/tests/startca -O startca
+    sh startca
+
 # HUB组网
 
 
