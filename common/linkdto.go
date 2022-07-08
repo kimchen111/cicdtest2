@@ -55,6 +55,7 @@ func (vto *VxlanTunnelVO) Port() int {
 	return 40000 + vto.Id
 }
 
+/*
 func (vto *VxlanTunnelVO) Path() (string, bool) {
 	return fmt.Sprintf("%s/%s", CpeVxlanConfDir, vto.VxlanName()), true
 }
@@ -70,7 +71,7 @@ func (vto *VxlanTunnelVO) RemoveConf() {
 		os.Remove(path)
 	}
 }
-
+*/
 /*
 ip link add vt10001 type vxlan id 10001 dstport 10001 remote 192.168.3.1 local 192.168.3.254 #dev eth1
 ip li set up dev vt10001

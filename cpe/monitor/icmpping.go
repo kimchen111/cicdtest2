@@ -2,8 +2,10 @@ package monitor
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"sdwan/common"
+	"strconv"
 	"time"
 
 	"github.com/go-ping/ping"
@@ -40,6 +42,22 @@ func (ip IcmpPing) Run() {
 	ip.ch <- ip
 }
 
+func (ip IcmpPing) ToPoint(id int, measurement string) Point {
+	ptag := make(map[string]string)
+	ptag["id"] = strconv.Itoa(id)
+	ptag["Ipaddr"] = ip.Ipaddr
+	fields := make(map[string]int)
+	fields["rtt"] = ip.AvgRtt
+	fields["loss"] = ip.Loss
+	fields["jitter"] = ip.MaxRtt - ip.MinRtt
+	return Point{
+		Measurement: measurement,
+		Time:        fmt.Sprintf("%d", time.Now().UnixMicro()),
+		Tags:        ptag,
+		Fields:      fields,
+	}
+}
+
 func StartVpeDetect(vd common.VpeDetectVO) {
 	ipch := make(chan IcmpPing)
 	defer close(ipch)
@@ -68,3 +86,21 @@ func StartVpeDetect(vd common.VpeDetectVO) {
 	data, _ := json.Marshal(dr)
 	common.HttpPost(common.GCC.GetVpeDetectURL(), data, common.GCC.DisablePost())
 }
+
+/*
+func StartCustomMonitor(cm common.CustomMonitorVO) {
+	ipch := make(chan IcmpPing)
+	defer close(ipch)
+	for _, item := range cm.Monitors {
+		ip := IcmpPing{
+			ch:     ipch,
+			Ipaddr: item.DstAddr,
+		}
+		go ip.Run()
+	}
+}
+
+func StopCustomMonitor(cm common.CustomMonitorVO) {
+
+}
+*/

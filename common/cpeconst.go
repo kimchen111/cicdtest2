@@ -41,15 +41,16 @@ var CpeSystemTaskType cpeSystemTaskType
 
 //Network
 type cpeNetworkTaskType struct {
-	AddLAN      string //添加LAN网段
-	DelLAN      string //删除LAN网段
-	EnableDHCP  string //启用DHCP服务
-	DisableDHCP string //禁用DHCP服务
-	NetworkInfo string //网络信息
-	DetectVpe   string
-
+	AddLAN                 string //添加LAN网段
+	DelLAN                 string //删除LAN网段
+	EnableDHCP             string //启用DHCP服务
+	DisableDHCP            string //禁用DHCP服务
+	NetworkInfo            string //网络信息
+	DetectVpe              string //对一批VPE进行探测
+	AddCustomMonitor       string //添加自定义监控
+	DelCustomMonitor       string //删除自定义监控
 	EnableTrafficAnalysis  string //开启流量分析
-	DisableTrafficAnalysis string //开启流量分析
+	DisableTrafficAnalysis string //关闭流量分析
 }
 
 var CpeNetworkTaskType cpeNetworkTaskType

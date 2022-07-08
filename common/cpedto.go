@@ -416,6 +416,22 @@ type VpeDetectVO struct {
 	Vpes []VpeVO `json:"vpes"`
 }
 
+type MonitorItemVO struct {
+	Id      int    `json:"id"`      //ID
+	SrcDev  string `json:"srcDev"`  //从哪个网口发起
+	SrcAddr string `json:"srcAddr"` //从哪个地址发起
+	DstAddr string `json:"dstAddr"` //目的地址
+}
+
+func (mi *MonitorItemVO) Path() string {
+	return fmt.Sprintf("%s/cm%d.conf", CpeMonitorConfDir, mi.Id)
+}
+
+type CustomMonitorVO struct {
+	Measurement string          `json:"measurement"` //PUSH到哪个表
+	Monitors    []MonitorItemVO `json:"monitors"`    //监控列表
+}
+
 type StaticRouteVO struct {
 	Target  string `json:"target"`            //网段列表
 	Via     string `json:"via,omitempty"`     //下一跳

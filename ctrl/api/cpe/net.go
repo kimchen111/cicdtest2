@@ -207,3 +207,69 @@ func DetectVpe(c *gin.Context) {
 	result := agent.Request(task)
 	c.JSON(http.StatusOK, result)
 }
+
+// @Summary 添加自定义监控任务
+// @Description 示例
+// @Description  {
+// @Description  "measurement":"customer1_m1",
+// @Description  "monitors":[{
+// @Description  	"id":22204,
+// @Description  	"srcDev":"eth0",
+// @Description  	"srcAddr":"192.168.0.1",
+// @Description  	"dstAddr":"192.168.211.9"
+// @Description     },{
+// @Description  	"id":22205,
+// @Description  	"srcDev":"eth0",
+// @Description  	"srcAddr":"192.168.0.2",
+// @Description  	"dstAddr":"192.168.211.10"
+// @Description     }]
+// @Description  }
+// @Tags CPE-Net
+// @Accept  json
+// @Produce  json
+// @Param esn path string true "Device ID"
+// @Param data body common.CustomMonitorVO true "自定义监控的参数"
+// @Success 200  {string} string  "结果描述"
+// @Router /v2/cpe/net/addcustommonitor/{esn} [post]
+func AddCustomMonitor(c *gin.Context) {
+	cms := common.CustomMonitorVO{}
+	c.BindJSON(&cms)
+	task := common.NewRequestTaskWithBody(
+		c.Param("esn"),
+		common.CpeTaskClass.Network,
+		common.CpeNetworkTaskType.AddCustomMonitor,
+		cms,
+	)
+	result := agent.Request(task)
+	c.JSON(http.StatusOK, result)
+}
+
+// @Summary 删除自定义监控任务
+// @Description 示例
+// @Description  {
+// @Description  "measurement":"customer1_m1",
+// @Description  "monitors":[{
+// @Description  	"id":22204
+// @Description     },{
+// @Description  	"id":22205
+// @Description     }]
+// @Description  }
+// @Tags CPE-Net
+// @Accept  json
+// @Produce  json
+// @Param esn path string true "Device ID"
+// @Param data body common.CustomMonitorVO true "自定义监控的参数"
+// @Success 200  {string} string  "结果描述"
+// @Router /v2/cpe/net/delcustommonitor/{esn} [post]
+func DelCustomMonitor(c *gin.Context) {
+	cms := common.CustomMonitorVO{}
+	c.BindJSON(&cms)
+	task := common.NewRequestTaskWithBody(
+		c.Param("esn"),
+		common.CpeTaskClass.Network,
+		common.CpeNetworkTaskType.DelCustomMonitor,
+		cms,
+	)
+	result := agent.Request(task)
+	c.JSON(http.StatusOK, result)
+}

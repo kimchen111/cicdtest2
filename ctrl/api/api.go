@@ -73,6 +73,8 @@ func RouteCPE(r *gin.Engine) {
 		net.POST("/enabledhcp/:esn", cpe.EnableDHCP)
 		net.POST("/disabledhcp/:esn", cpe.DisableDHCP)
 		net.POST("/detectvpe/:esn", cpe.DetectVpe)
+		net.POST("/addcustommonitor/:esn", cpe.AddCustomMonitor)
+		net.POST("/delcustommonitor/:esn", cpe.DelCustomMonitor)
 		net.POST("/enabletrafficanalysis/:esn", cpe.EnableTrafficAnalysis)
 		net.POST("/disabletrafficanalysis/:esn", cpe.DisableTrafficAnalysis)
 	}

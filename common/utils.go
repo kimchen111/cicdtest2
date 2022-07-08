@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
@@ -500,4 +501,21 @@ func CreateVlanIntf(intf string, vlanid int, name string) bool {
 		}
 		return true
 	}
+}
+
+func ListFiles(path string) (bool, []string) {
+	arr := make([]string, 500)
+	fileInfos, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Printf("ReadDir failed, error: %s\n", err)
+		return false, nil
+	}
+	i := 0
+	for _, info := range fileInfos {
+		if !info.IsDir() {
+			arr[i] = fmt.Sprintf("%s/%s", path, info.Name())
+			i++
+		}
+	}
+	return true, arr[:i]
 }

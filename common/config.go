@@ -23,12 +23,13 @@ const (
 	CpeMonitorPort       = 10789
 	CpeQosDir            = "/sdwan/qos"
 	CpeKeepalivedDir     = "/sdwan/keepalived"
-	CpeVxlanConfDir      = "/sdwan/vxlan"
+	CpeMonitorConfDir    = "/sdwan/monitor"
 	CpeBirdResetPath     = "/sdwan/resetbirdstate"
 	CpeBirdConfPath      = "/etc/bird.conf"
 	CpeBirdStaticPath    = "/etc/bird-static.onf"
 	CpeHubConfPath       = "/etc/hub.conf"
 	CpeTaIdPath          = "/etc/taid"
+	// CpeVxlanConfDir      = "/sdwan/vxlan"
 )
 
 //VPE

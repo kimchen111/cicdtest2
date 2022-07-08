@@ -11,7 +11,8 @@ func InitConfig() {
 	log.Printf("AgentType %s", common.GBC.GetAgentType())
 	InitSystem()
 	InitVnetZone()
-	InitVxlanConfDir()
+	// InitVxlanConfDir()
+	InitMonitorConfDir()
 	PrepareQos()
 	PrepareBirdResetScript()
 	// RenameLandev()
@@ -30,12 +31,18 @@ func InitSystem() {
 	}
 }
 
+/*
 func InitVxlanConfDir() {
 	if !common.FileExists(common.CpeVxlanConfDir) {
 		exec.Command("mkdir", common.CpeVxlanConfDir).Run()
 	}
 }
-
+*/
+func InitMonitorConfDir() {
+	if !common.FileExists(common.CpeMonitorConfDir) {
+		exec.Command("mkdir", common.CpeMonitorConfDir).Run()
+	}
+}
 func InitVnetZone() {
 	if !common.FileExists("/etc/fwzone_inited") {
 		exec.Command("uci", "add", "firewall", "zone").Run()

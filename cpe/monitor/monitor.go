@@ -81,6 +81,29 @@ func (mi *LinkMonitor) Start() {
 	// }
 }
 
+type CustomTask struct {
+	Measurement string               `json:"measurement"` //PUSH到哪个表
+	MonitorItem common.MonitorItemVO `json:"monitorItem"` //Monitor detail
+	ipch        chan IcmpPing
+	pch         chan Point
+}
+
+func (ct *CustomTask) WaitResult() {
+	ip := <-ct.ipch
+	p := ip.ToPoint(ct.MonitorItem.Id, ct.Measurement)
+	ct.pch <- p
+}
+
+func (ct *CustomTask) Start() {
+	log.Printf("Start CustomMonitor for %d", ct.MonitorItem.Id)
+	ip := IcmpPing{
+		ch:     ct.ipch,
+		Ipaddr: ct.MonitorItem.DstAddr,
+	}
+	go ip.Run()
+	ct.WaitResult()
+}
+
 type Monitor struct {
 	ch chan Point
 	tm *TrafficMonitor
@@ -108,7 +131,7 @@ func (m *Monitor) WaitMonitorData() {
 		idx++
 		log.Printf("Recv point: %s count: %d", point.Measurement, idx)
 		dura := time.Now().Unix() - begin
-		if idx > 2 || dura > 32 {
+		if idx > 2 || dura > 29 {
 			PushMonitorData(cache[:idx])
 			idx = 0
 		}
@@ -200,6 +223,23 @@ func (m *Monitor) GetVpnlinkPeerAddrs() map[string]string {
 	return r
 }
 
+func (m *Monitor) GetCustomTasks() []CustomTask {
+	cts := make([]CustomTask, 500)
+	_, files := common.ListFiles(common.CpeMonitorConfDir)
+	idx := 0
+	for _, path := range files {
+		ct := CustomTask{
+			ipch: make(chan IcmpPing),
+			pch:  m.ch,
+		}
+		if err := common.LoadConfig(path, &ct); err == nil {
+			cts[idx] = ct
+			idx++
+		}
+	}
+	return cts[:idx]
+}
+
 func (m *Monitor) MonitorLink() {
 	peers := m.GetVpnlinkPeerAddrs()
 	for name, addr := range peers {
@@ -217,12 +257,20 @@ func (m *Monitor) MonitorTraffic() {
 	go m.tm.Start(intfs)
 }
 
+func (m *Monitor) MonitorCustomTask() {
+	tasks := m.GetCustomTasks()
+	for _, task := range tasks {
+		go task.Start()
+	}
+}
+
 func (m *Monitor) StartMonitor() {
 	monitor.Init()
 	go m.WaitMonitorData()
 	for {
 		m.MonitorLink()
 		m.MonitorTraffic()
+		m.MonitorCustomTask()
 		tchan := time.After(time.Second * 30)
 		<-tchan
 	}

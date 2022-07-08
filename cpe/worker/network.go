@@ -269,3 +269,23 @@ func (network Network) DetectVpe(msg common.Message) {
 	}
 	Response(msg.ToResult("failed: unknown error"))
 }
+
+func (network Network) AddCustomMonitor(msg common.Message) {
+	cms := common.CustomMonitorVO{}
+	if err := common.LoadBody(msg.Body, &cms); err == nil {
+		monitor.SaveCustomMonitor(cms)
+		Response(msg.ToResult("success"))
+		return
+	}
+	Response(msg.ToResult("failed: unknown error"))
+}
+
+func (network Network) DelCustomMonitor(msg common.Message) {
+	cms := common.CustomMonitorVO{}
+	if err := common.LoadBody(msg.Body, &cms); err == nil {
+		monitor.RemoveCustomMonitor(cms)
+		Response(msg.ToResult("success"))
+		return
+	}
+	Response(msg.ToResult("failed: unknown error"))
+}
